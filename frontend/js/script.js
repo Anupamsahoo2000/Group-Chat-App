@@ -52,11 +52,12 @@ document.getElementById("form-signup").addEventListener("submit", (e) => {
   e.preventDefault();
   const name = document.getElementById("signup-name").value.trim();
   const email = document.getElementById("signup-email").value.trim();
+  const phone = document.getElementById("signup-phone").value.trim();
   const pwd = document.getElementById("signup-password").value;
-  if (!name || !email || pwd.length < 8)
+  if (!name || !email || !phone || pwd.length < 8)
     return toast("Please complete the form (8+ char password).");
   toast("Account created — welcome to ChatApp!");
-  console.log("Signup:", { name, email, pwd });
+  console.log("Signup:", { name, email, phone, pwd });
 });
 
 window.addEventListener("keypress", (ev) => {

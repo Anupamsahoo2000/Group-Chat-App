@@ -57,13 +57,15 @@
             <div id="forms" class="text-white">
               <form id="form-login" class="space-y-4">
                 <div>
-                  <label class="block text-xs font-semibold mb-1">Email</label>
+                  <label class="block text-xs font-semibold mb-1"
+                    >Email or Phone</label
+                  >
                   <input
                     type="email"
                     id="login-email"
                     required
-                    class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-white/60 text-white text-sm"
-                    placeholder="you@example.com"
+                    class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-black/40 text-black text-sm"
+                    placeholder="you@example.com or +1234567890"
                   />
                 </div>
                 <div>
@@ -75,12 +77,12 @@
                       type="password"
                       id="login-password"
                       required
-                      class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-white/60 text-white text-sm"
+                      class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-black/40 text-black text-sm"
                       placeholder="••••••••"
                     />
                     <button
                       type="button"
-                      class="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-white/80"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-black/80"
                       data-toggle="#login-password"
                     >
                       Show
@@ -115,18 +117,28 @@
                     type="text"
                     id="signup-name"
                     required
-                    class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-white/60 text-white text-sm"
+                    class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-gray/40 text-black text-sm"
                     placeholder="Ada Lovelace"
                   />
                 </div>
                 <div>
-                  <label class="block text-xs font-semibold mb-1">Email</label>
+                  <label class="block text-xs font-semibold mb-1">Email </label>
                   <input
                     type="email"
                     id="signup-email"
                     required
-                    class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-white/60 text-white text-sm"
+                    class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-gray/40 text-black text-sm"
                     placeholder="you@example.com"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold mb-1">Phone</label>
+                  <input
+                    type="tel"
+                    id="signup-phone"
+                    required
+                    class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-gray/40 text-black text-sm"
+                    placeholder="+1234567890"
                   />
                 </div>
                 <div>
@@ -138,12 +150,12 @@
                       type="password"
                       id="signup-password"
                       required
-                      class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-white/60 text-white text-sm"
+                      class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-gray/40 text-black text-sm"
                       placeholder="Create a password"
                     />
                     <button
                       type="button"
-                      class="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-white/80"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-black/80"
                       data-toggle="#signup-password"
                     >
                       Show
