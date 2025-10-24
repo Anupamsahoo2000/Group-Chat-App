@@ -1,3 +1,5 @@
+const BASE_URL = "http://localhost:5000";
+
 const tabLogin = document.getElementById("tab-login");
 const tabSignup = document.getElementById("tab-signup");
 const formLogin = document.getElementById("form-login");
@@ -30,37 +32,67 @@ document.querySelectorAll("button[data-toggle]").forEach((btn) => {
   });
 });
 
-function toast(msg) {
+function toast(msg, success = false) {
   const el = document.createElement("div");
   el.textContent = msg;
-  el.className =
-    "fixed left-1/2 -translate-x-1/2 bottom-8 bg-white/90 text-black rounded-full px-4 py-2 shadow-lg";
+  el.className = `fixed left-1/2 -translate-x-1/2 bottom-8 ${
+    success ? "bg-green-500" : "bg-red-500"
+  } text-white rounded-full px-4 py-2 shadow-lg`;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 3000);
 }
 
-document.getElementById("form-login").addEventListener("submit", (e) => {
+// LOGIN
+formLogin.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const email = document.getElementById("login-email").value.trim();
+  const emailOrPhone = document.getElementById("login-email").value.trim();
   const pwd = document.getElementById("login-password").value;
-  if (!email || !pwd) return toast("Please enter email and password.");
-  toast("Logged in — welcome back!");
-  console.log("Login:", { email, pwd });
+
+  if (!emailOrPhone || !pwd)
+    return toast("Please enter email/phone and password.");
+
+  try {
+    const res = await axios.post(`${BASE_URL}/user/login`, {
+      identifier: emailOrPhone,
+      password: pwd,
+    });
+    toast("Logged in — welcome back!", true);
+    formLogin.reset();
+    console.log("Login Success:", res.data);
+
+    // ✅ Save token for later use
+    localStorage.setItem("token", res.data.token);
+  } catch (err) {
+    console.error(err);
+    toast(err.response?.data?.message || "Login failed");
+  }
 });
 
-document.getElementById("form-signup").addEventListener("submit", (e) => {
+// SIGNUP
+formSignup.addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = document.getElementById("signup-name").value.trim();
   const email = document.getElementById("signup-email").value.trim();
   const phone = document.getElementById("signup-phone").value.trim();
-  const pwd = document.getElementById("signup-password").value;
-  if (!name || !email || !phone || pwd.length < 8)
-    return toast("Please complete the form (8+ char password).");
-  toast("Account created — welcome to ChatApp!");
-  console.log("Signup:", { name, email, phone, pwd });
-});
+  const password = document.getElementById("signup-password").value;
 
-window.addEventListener("keypress", (ev) => {
-  if (ev.key.toLowerCase() === "l") setActiveTab("login");
-  if (ev.key.toLowerCase() === "s") setActiveTab("signup");
+  if (!name || !email || !phone || !password)
+    return toast("Please complete the form.");
+
+  try {
+    const res = await axios.post(`${BASE_URL}/user/signup`, {
+      name,
+      email,
+      phone,
+      password,
+    });
+
+    toast("Account created successfully!", true);
+    formSignup.reset();
+    console.log("Signup Success:", res.data);
+    setActiveTab("login");
+  } catch (err) {
+    console.error(err);
+    toast(err.response?.data?.message || "Signup failed");
+  }
 });
