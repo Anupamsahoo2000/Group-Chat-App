@@ -1,0 +1,94 @@
+:root {
+  --g1: 255, 99, 132;
+  --g2: 123, 31, 162;
+  --g3: 255, 159, 67;
+  --g4: 0, 188, 212;
+}
+body {
+  min-height: 100vh;
+  background: linear-gradient(
+    120deg,
+    rgba(var(--g2), 1),
+    rgba(var(--g1), 1),
+    rgba(var(--g3), 1),
+    rgba(var(--g4), 1)
+  );
+  background-size: 800% 800%;
+  animation: gradientShift 20s ease infinite;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial;
+}
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 50% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  75% {
+    background-position: 50% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+.blob {
+  position: absolute;
+  filter: blur(40px);
+  opacity: 0.18;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  animation: float 8s ease-in-out infinite;
+}
+.blob.b1 {
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 20% 20%,
+    rgba(var(--g1), 0.9),
+    rgba(var(--g2), 0.6)
+  );
+  top: -80px;
+  left: -60px;
+}
+.blob.b2 {
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 80% 80%,
+    rgba(var(--g3), 0.9),
+    rgba(var(--g4), 0.6)
+  );
+  bottom: -60px;
+  right: -40px;
+  animation-duration: 10s;
+}
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(18px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+.glass {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.06)
+  );
+  backdrop-filter: blur(8px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.input-playful:focus {
+  outline: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}

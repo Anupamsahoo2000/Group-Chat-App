@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ChatApp — Login / Signup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./css/style.css" />
+  </head>
+  <body>
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+
+    <main class="min-h-screen flex items-center justify-center p-6">
+      <div
+        class="max-w-3xl w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-center"
+      >
+        <section
+          class="hidden md:flex flex-col items-start justify-center gap-6 p-8 rounded-2xl text-white"
+        >
+          <h1 class="text-4xl font-extrabold tracking-tight">ChatApp</h1>
+          <p class="max-w-sm text-lg opacity-95">
+            A playful place to chat with friends — fast, colorful, and fun.
+            Create an account or log in to start your conversation.
+          </p>
+          <div class="mt-4 w-full"></div>
+        </section>
+
+        <section class="relative p-1 rounded-3xl glass shadow-2xl">
+          <div class="bg-white/6 rounded-3xl p-6 md:p-8">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <div class="text-2xl font-bold text-white">ChatApp</div>
+                <div class="text-xs text-white/80">
+                  Welcome back — let's get you chatting ✨
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="mb-6 bg-white/8 p-1 rounded-xl flex items-center gap-1 w-full"
+            >
+              <button
+                id="tab-login"
+                class="flex-1 py-2 px-3 rounded-xl text-sm font-medium transition focus:outline-none"
+              >
+                Login
+              </button>
+              <button
+                id="tab-signup"
+                class="flex-1 py-2 px-3 rounded-xl text-sm font-medium transition focus:outline-none"
+              >
+                Sign up
+              </button>
+            </div>
+
+            <div id="forms" class="text-white">
+              <form id="form-login" class="space-y-4">
+                <div>
+                  <label class="block text-xs font-semibold mb-1">Email</label>
+                  <input
+                    type="email"
+                    id="login-email"
+                    required
+                    class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-white/60 text-white text-sm"
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold mb-1"
+                    >Password</label
+                  >
+                  <div class="relative">
+                    <input
+                      type="password"
+                      id="login-password"
+                      required
+                      class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-white/60 text-white text-sm"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-white/80"
+                      data-toggle="#login-password"
+                    >
+                      Show
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  class="flex items-center justify-between text-sm text-white/85"
+                >
+                  <a href="#" id="forgot-link" class="underline"
+                    >Forgot password?</a
+                  >
+                </div>
+
+                <div>
+                  <button
+                    type="submit"
+                    class="w-full rounded-xl py-3 font-semibold bg-gradient-to-r from-pink-500 to-orange-400 shadow-lg hover:scale-[1.01] active:scale-99 transition-transform"
+                  >
+                    Log in
+                  </button>
+                </div>
+              </form>
+
+              <form id="form-signup" class="space-y-4 hidden">
+                <div>
+                  <label class="block text-xs font-semibold mb-1"
+                    >Full name</label
+                  >
+                  <input
+                    type="text"
+                    id="signup-name"
+                    required
+                    class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-white/60 text-white text-sm"
+                    placeholder="Ada Lovelace"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold mb-1">Email</label>
+                  <input
+                    type="email"
+                    id="signup-email"
+                    required
+                    class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-white/60 text-white text-sm"
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold mb-1"
+                    >Password</label
+                  >
+                  <div class="relative">
+                    <input
+                      type="password"
+                      id="signup-password"
+                      required
+                      class="input-playful w-full rounded-lg px-4 py-3 bg-white/6 placeholder-white/60 text-white text-sm"
+                      placeholder="Create a password"
+                    />
+                    <button
+                      type="button"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-white/80"
+                      data-toggle="#signup-password"
+                    >
+                      Show
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <button
+                    type="submit"
+                    class="w-full rounded-xl py-3 font-semibold bg-gradient-to-r from-green-400 to-teal-400 shadow-lg hover:scale-[1.01] active:scale-99 transition-transform"
+                  >
+                    Create account
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="./js/script.js"></script>
+  </body>
+</html>
