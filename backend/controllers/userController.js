@@ -74,4 +74,14 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { signup, login };
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.findAll({ attributes: ["id", "name"] });
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports = { signup, login, getAllUsers };

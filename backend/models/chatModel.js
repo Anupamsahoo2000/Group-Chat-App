@@ -1,4 +1,3 @@
-// models/messageModel.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 const User = require("./userModel");
@@ -13,10 +12,19 @@ const Message = sequelize.define("Message", {
     type: DataTypes.TEXT,
     allowNull: false,
   },
+  recipientId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
 });
 
-// Relation: Message belongs to User
-Message.belongsTo(User, { foreignKey: "userId", onDelete: "CASCADE" });
-User.hasMany(Message, { foreignKey: "userId" });
+// ✅ Associations
+// Message sent by a user
+Message.belongsTo(User, { foreignKey: "userId", as: "sender" });
+User.hasMany(Message, { foreignKey: "userId", as: "sentMessages" });
+
+// Message received by a user
+Message.belongsTo(User, { foreignKey: "recipientId", as: "recipient" });
+User.hasMany(Message, { foreignKey: "recipientId", as: "receivedMessages" });
 
 module.exports = Message;

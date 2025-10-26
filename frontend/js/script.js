@@ -1,10 +1,13 @@
+// Base API URL
 const BASE_URL = "http://localhost:5000";
 
+// Tab & form references
 const tabLogin = document.getElementById("tab-login");
 const tabSignup = document.getElementById("tab-signup");
 const formLogin = document.getElementById("form-login");
 const formSignup = document.getElementById("form-signup");
 
+// 🧭 Tab switcher
 function setActiveTab(tab) {
   if (tab === "login") {
     formLogin.classList.remove("hidden");
@@ -22,6 +25,7 @@ tabLogin.addEventListener("click", () => setActiveTab("login"));
 tabSignup.addEventListener("click", () => setActiveTab("signup"));
 setActiveTab("login");
 
+// 👁️ Toggle password visibility
 document.querySelectorAll("button[data-toggle]").forEach((btn) => {
   btn.addEventListener("click", () => {
     const sel = btn.getAttribute("data-toggle");
@@ -32,17 +36,18 @@ document.querySelectorAll("button[data-toggle]").forEach((btn) => {
   });
 });
 
+// 🧈 Toast notification
 function toast(msg, success = false) {
   const el = document.createElement("div");
   el.textContent = msg;
   el.className = `fixed left-1/2 -translate-x-1/2 bottom-8 ${
     success ? "bg-green-500" : "bg-red-500"
-  } text-white rounded-full px-4 py-2 shadow-lg`;
+  } text-white rounded-full px-4 py-2 shadow-lg transition-all duration-300`;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 3000);
 }
 
-// LOGIN
+// 🔐 LOGIN
 formLogin.addEventListener("submit", async (e) => {
   e.preventDefault();
   const emailOrPhone = document.getElementById("login-email").value.trim();
@@ -56,19 +61,21 @@ formLogin.addEventListener("submit", async (e) => {
       identifier: emailOrPhone,
       password: pwd,
     });
+
     toast("Logged in — welcome back!", true);
     formLogin.reset();
-    console.log("Login Success:", res.data);
 
-    // ✅ Save token for later use
+    // ✅ Save token
     localStorage.setItem("token", res.data.token);
+
+    window.location.href = "./chatWindow.html";
   } catch (err) {
     console.error(err);
     toast(err.response?.data?.message || "Login failed");
   }
 });
 
-// SIGNUP
+// 📝 SIGNUP
 formSignup.addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = document.getElementById("signup-name").value.trim();
