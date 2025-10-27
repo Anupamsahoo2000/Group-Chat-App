@@ -64,27 +64,17 @@ function openChat(user) {
 
   loadMessages();
   highlightSelectedContact(user.id);
-  document.querySelectorAll("#contacts > div").forEach((contact) => {
-    if (parseInt(contact.dataset.id) === user.id) {
-      contact.classList.add("bg-gray-700", "transition-colors", "duration-200");
-    } else {
-      contact.classList.remove("bg-gray-700");
-    }
-  });
 
   if (window.innerWidth < 768) {
     sidebar.classList.add("-translate-x-full");
     chatArea.classList.remove("translate-x-full");
   }
 }
-
 function highlightSelectedContact(userId) {
   document.querySelectorAll("#contacts > div").forEach((contact) => {
-    if (parseInt(contact.dataset.id) === userId) {
-      contact.classList.add("bg-gray-700", "transition-colors", "duration-200");
-    } else {
-      contact.classList.remove("bg-gray-700");
-    }
+    const isSelected = parseInt(contact.dataset.id) === userId;
+    contact.classList.toggle("bg-gray-700", isSelected);
+    contact.classList.toggle("hover:bg-gray-600", !isSelected);
   });
 }
 
