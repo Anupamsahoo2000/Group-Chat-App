@@ -11,32 +11,40 @@ const contactsEl = document.getElementById("contacts");
 const BASE_URL = "http://localhost:5000";
 let selectedUserId = null;
 
-// ✅ Check if logged in
+// ✅ JWT token check
 const token = localStorage.getItem("token");
 if (!token) {
   alert("Please log in first!");
   window.location.href = "./index.html";
 }
 
-// Decode JWT to get logged-in user ID
+// ✅ Decode token to get logged-in user ID
 function getLoggedInUserId() {
   const payload = JSON.parse(atob(token.split(".")[1]));
   return payload.id;
 }
 const loggedInUserId = getLoggedInUserId();
 
-// ✅ Socket.IO connection
-const socket = io(BASE_URL, {
-  auth: { token },
+// ⚡ Initialize Socket.IO
+const socket = io(BASE_URL);
+
+// 🔐 Authenticate with token
+socket.emit("authenticate", token);
+
+// 👂 Listen for real-time incoming messages
+socket.on("receiveMessage", (msg) => {
+  if (msg.sender.id === selectedUserId || msg.recipient.id === selectedUserId) {
+    displayMessage(msg);
+  }
 });
 
-// 👤 Load all users for sidebar
+// 👤 Load all users in sidebar
 async function loadUsers() {
   try {
     const res = await axios.get(`${BASE_URL}/user/all`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    const users = res.data.filter((u) => u.id !== loggedInUserId); // exclude self
+    const users = res.data.filter((u) => u.id !== loggedInUserId);
 
     contactsEl.innerHTML = "";
 
@@ -46,12 +54,10 @@ async function loadUsers() {
         "p-4 hover:bg-gray-600 cursor-pointer border-b border-gray-700";
       div.textContent = user.name;
       div.dataset.id = user.id;
-
       div.addEventListener("click", () => openChat(user));
       contactsEl.appendChild(div);
     });
 
-    // Restore previously opened chat (if any)
     const storedId = parseInt(localStorage.getItem("selectedContactId"));
     if (storedId) {
       const storedUser = users.find((u) => u.id === storedId);
@@ -77,6 +83,7 @@ function openChat(user) {
   }
 }
 
+// 🎨 Highlight selected contact
 function highlightSelectedContact(userId) {
   document.querySelectorAll("#contacts > div").forEach((contact) => {
     const isSelected = parseInt(contact.dataset.id) === userId;
@@ -85,93 +92,59 @@ function highlightSelectedContact(userId) {
   });
 }
 
-// 🧠 Load messages with selected user
+// 🧠 Load previous chat messages
 async function loadMessages() {
   if (!selectedUserId) return;
-
   try {
     const res = await axios.get(`${BASE_URL}/chat/with/${selectedUserId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    const messages = res.data;
 
     chatBox.innerHTML = "";
-
-    messages.forEach((msg) => {
-      const isMine = msg.sender.id === loggedInUserId;
-      const div = document.createElement("div");
-      div.className = `flex ${isMine ? "justify-end" : "justify-start"} mb-2`;
-
-      div.innerHTML = `
-        <div class="${
-          isMine ? "bg-green-500 text-white" : "bg-gray-700 text-white"
-        } px-3 py-2 rounded-xl max-w-[70%] break-words">
-          ${msg.content}
-        </div>
-        <div class="text-xs text-gray-400 ml-2 self-end">
-          ${new Date(msg.createdAt).toLocaleTimeString()}
-        </div>
-      `;
-      chatBox.appendChild(div);
-    });
-
+    res.data.forEach(displayMessage);
     chatBox.scrollTop = chatBox.scrollHeight;
   } catch (err) {
     console.error(err);
   }
 }
 
-// 💬 Send a message
-chatForm.addEventListener("submit", async (e) => {
+// 💬 Send a message (real-time)
+chatForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const content = messageInput.value.trim();
   if (!content || !selectedUserId) return;
 
-  try {
-    const res = await axios.post(
-      `${BASE_URL}/chat/send`,
-      { content, recipientId: selectedUserId },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    // Emit real-time message event after saving
-    socket.emit("sendMessage", {
-      recipientId: selectedUserId,
-      content,
-      senderId: loggedInUserId,
-    });
-
-    messageInput.value = "";
-    loadMessages();
-  } catch (err) {
-    console.error(err);
-  }
+  socket.emit("sendMessage", { content, recipientId: selectedUserId });
+  messageInput.value = "";
 });
 
-// 🧠 Listen for incoming messages (real-time)
-socket.on("receiveMessage", (message) => {
-  // Only refresh if it belongs to the open chat
-  if (
-    message.senderId === selectedUserId ||
-    message.recipientId === selectedUserId
-  ) {
-    loadMessages();
-  }
-});
+// 🧩 Helper to display a message in chatBox
+function displayMessage(msg) {
+  const isMine = msg.sender.id === loggedInUserId;
+  const div = document.createElement("div");
+  div.className = `flex ${isMine ? "justify-end" : "justify-start"} mb-2`;
 
-// // 🔁 Fallback: Refresh messages every 5 seconds
-// setInterval(() => {
-//   if (selectedUserId) loadMessages();
-// }, 5000);
+  div.innerHTML = `
+    <div class="${
+      isMine ? "bg-green-500 text-white" : "bg-gray-700 text-white"
+    } px-3 py-2 rounded-xl max-w-[70%] break-words">
+      ${msg.content}
+    </div>
+    <div class="text-xs text-gray-400 ml-2 self-end">
+      ${new Date(msg.createdAt).toLocaleTimeString()}
+    </div>
+  `;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
 
 // 👋 Logout
 logoutBtn.addEventListener("click", () => {
   localStorage.removeItem("token");
-  localStorage.removeItem("selectedContactId");
   window.location.href = "./index.html";
 });
 
-// 🧭 Mobile back button
+// 📱 Back button (mobile)
 backBtn.addEventListener("click", () => {
   if (window.innerWidth < 768) {
     sidebar.classList.remove("-translate-x-full");
@@ -179,5 +152,5 @@ backBtn.addEventListener("click", () => {
   }
 });
 
-// Load users on page load
+// 🚀 Load all users on page load
 loadUsers();
