@@ -26,15 +26,51 @@ function getLoggedInUserId() {
 const loggedInUserId = getLoggedInUserId();
 
 // ⚡ Initialize Socket.IO
-const socket = io(BASE_URL);
+const socket = io(BASE_URL, { transports: ["websocket"] });
 
-// 🔐 Authenticate with token
-socket.emit("authenticate", token);
+// 🔐 Authenticate with token when connected
+socket.on("connect", () => {
+  console.log("🟢 Connected to Socket.IO");
+  socket.emit("authenticate", token);
+});
+
+socket.on("disconnect", () => {
+  console.log("🔴 Disconnected from Socket.IO");
+});
 
 // 👂 Listen for real-time incoming messages
 socket.on("receiveMessage", (msg) => {
   if (msg.sender.id === selectedUserId || msg.recipient.id === selectedUserId) {
     displayMessage(msg);
+  }
+});
+
+// 👤 Online/offline status updates
+socket.on("userOnline", (userId) => {
+  const contact = document.querySelector(`[data-id='${userId}']`);
+  if (contact) contact.classList.add("border-l-4", "border-green-500");
+});
+
+socket.on("userOffline", (userId) => {
+  const contact = document.querySelector(`[data-id='${userId}']`);
+  if (contact) contact.classList.remove("border-l-4", "border-green-500");
+});
+
+// ✍️ Typing indicator
+messageInput.addEventListener("input", () => {
+  if (selectedUserId) socket.emit("typing", { recipientId: selectedUserId });
+});
+
+socket.on("userTyping", ({ senderId }) => {
+  if (senderId === selectedUserId) {
+    const typing = document.getElementById("typing-indicator");
+    if (typing) {
+      typing.style.display = "block";
+      clearTimeout(window.typingTimeout);
+      window.typingTimeout = setTimeout(() => {
+        typing.style.display = "none";
+      }, 1500);
+    }
   }
 });
 
@@ -51,8 +87,11 @@ async function loadUsers() {
     users.forEach((user) => {
       const div = document.createElement("div");
       div.className =
-        "p-4 hover:bg-gray-600 cursor-pointer border-b border-gray-700";
-      div.textContent = user.name;
+        "p-4 hover:bg-gray-600 cursor-pointer border-b border-gray-700 flex justify-between items-center";
+      div.innerHTML = `
+        <span>${user.name}</span>
+        <span class="w-3 h-3 rounded-full bg-gray-500" id="status-${user.id}"></span>
+      `;
       div.dataset.id = user.id;
       div.addEventListener("click", () => openChat(user));
       contactsEl.appendChild(div);
@@ -131,7 +170,10 @@ function displayMessage(msg) {
       ${msg.content}
     </div>
     <div class="text-xs text-gray-400 ml-2 self-end">
-      ${new Date(msg.createdAt).toLocaleTimeString()}
+      ${new Date(msg.createdAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}
     </div>
   `;
   chatBox.appendChild(div);

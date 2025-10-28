@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const Message = require("../models/chatModel");
 const User = require("../models/userModel");
 require("dotenv").config();
+
 function socket(server) {
   const io = new Server(server, {
     cors: {
@@ -11,16 +12,21 @@ function socket(server) {
     },
   });
 
+  // 🧠 Keep track of online users
   const onlineUsers = new Map();
 
   io.on("connection", (socket) => {
     console.log("🟢 Client connected:", socket.id);
 
+    // 🔐 Authenticate user via token
     socket.on("authenticate", (token) => {
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         onlineUsers.set(decoded.id, socket.id);
         socket.userId = decoded.id;
+
+        // ✅ Notify all clients that user is online
+        io.emit("userOnline", decoded.id);
         console.log(`✅ User ${decoded.id} authenticated`);
       } catch (err) {
         console.error("❌ Invalid token:", err.message);
@@ -28,6 +34,7 @@ function socket(server) {
       }
     });
 
+    // 💬 Handle sending messages
     socket.on("sendMessage", async ({ content, recipientId }) => {
       if (!socket.userId) return;
 
@@ -52,11 +59,24 @@ function socket(server) {
       socket.emit("receiveMessage", fullMessage);
     });
 
-    socket.on("disconnect", () => {
-      console.log("🔴 Client disconnected:", socket.id);
-      for (const [userId, id] of onlineUsers.entries()) {
-        if (id === socket.id) onlineUsers.delete(userId);
+    // ✍️ Handle typing indicator
+    socket.on("typing", ({ recipientId }) => {
+      const recipientSocketId = onlineUsers.get(recipientId);
+      if (recipientSocketId) {
+        io.to(recipientSocketId).emit("userTyping", {
+          senderId: socket.userId,
+        });
       }
+    });
+
+    // 🔴 Handle user disconnect
+    socket.on("disconnect", () => {
+      if (socket.userId) {
+        onlineUsers.delete(socket.userId);
+        io.emit("userOffline", socket.userId);
+      }
+
+      console.log("🔴 Client disconnected:", socket.id);
     });
   });
 
