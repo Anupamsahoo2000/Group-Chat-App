@@ -18,12 +18,17 @@ if (!token) {
   window.location.href = "./index.html";
 }
 
-// Get logged-in user ID from JWT
+// Decode JWT to get logged-in user ID
 function getLoggedInUserId() {
   const payload = JSON.parse(atob(token.split(".")[1]));
   return payload.id;
 }
 const loggedInUserId = getLoggedInUserId();
+
+// ✅ Socket.IO connection
+const socket = io(BASE_URL, {
+  auth: { token },
+});
 
 // 👤 Load all users for sidebar
 async function loadUsers() {
@@ -45,6 +50,8 @@ async function loadUsers() {
       div.addEventListener("click", () => openChat(user));
       contactsEl.appendChild(div);
     });
+
+    // Restore previously opened chat (if any)
     const storedId = parseInt(localStorage.getItem("selectedContactId"));
     if (storedId) {
       const storedUser = users.find((u) => u.id === storedId);
@@ -59,7 +66,6 @@ async function loadUsers() {
 function openChat(user) {
   selectedUserId = user.id;
   chatName.textContent = user.name;
-
   localStorage.setItem("selectedContactId", user.id);
 
   loadMessages();
@@ -70,6 +76,7 @@ function openChat(user) {
     chatArea.classList.remove("translate-x-full");
   }
 }
+
 function highlightSelectedContact(userId) {
   document.querySelectorAll("#contacts > div").forEach((contact) => {
     const isSelected = parseInt(contact.dataset.id) === userId;
@@ -92,7 +99,6 @@ async function loadMessages() {
 
     messages.forEach((msg) => {
       const isMine = msg.sender.id === loggedInUserId;
-
       const div = document.createElement("div");
       div.className = `flex ${isMine ? "justify-end" : "justify-start"} mb-2`;
 
@@ -122,11 +128,18 @@ chatForm.addEventListener("submit", async (e) => {
   if (!content || !selectedUserId) return;
 
   try {
-    await axios.post(
+    const res = await axios.post(
       `${BASE_URL}/chat/send`,
       { content, recipientId: selectedUserId },
       { headers: { Authorization: `Bearer ${token}` } }
     );
+
+    // Emit real-time message event after saving
+    socket.emit("sendMessage", {
+      recipientId: selectedUserId,
+      content,
+      senderId: loggedInUserId,
+    });
 
     messageInput.value = "";
     loadMessages();
@@ -135,12 +148,26 @@ chatForm.addEventListener("submit", async (e) => {
   }
 });
 
-// 🔁 Refresh messages every 5 seconds
-setInterval(loadMessages, 5000);
+// 🧠 Listen for incoming messages (real-time)
+socket.on("receiveMessage", (message) => {
+  // Only refresh if it belongs to the open chat
+  if (
+    message.senderId === selectedUserId ||
+    message.recipientId === selectedUserId
+  ) {
+    loadMessages();
+  }
+});
+
+// // 🔁 Fallback: Refresh messages every 5 seconds
+// setInterval(() => {
+//   if (selectedUserId) loadMessages();
+// }, 5000);
 
 // 👋 Logout
 logoutBtn.addEventListener("click", () => {
   localStorage.removeItem("token");
+  localStorage.removeItem("selectedContactId");
   window.location.href = "./index.html";
 });
 

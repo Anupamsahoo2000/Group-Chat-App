@@ -3,6 +3,9 @@ const db = require("./config/db");
 const cors = require("cors");
 const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
+const path = require("path");
+
+app.use(express.static(path.join(__dirname, "../frontend")));
 
 require("dotenv").config();
 
