@@ -21,6 +21,8 @@ app.use("/chat", chatRoutes);
 app.use("/group", groupRoutes);
 app.use("/media", mediaRoutes);
 
+require("./cron/archiveMessages"); // start the archiving cron job
+
 const server = http.createServer(app);
 socket(server); // ✅ initialize socket.io
 
