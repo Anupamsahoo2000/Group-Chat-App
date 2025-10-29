@@ -1,7 +1,7 @@
 const Message = require("../models/chatModel");
 const User = require("../models/userModel");
 const { Op } = require("sequelize");
-
+const { GroupMember } = require("../models/groupModel");
 // Send a message
 const sendMessage = async (req, res) => {
   try {
@@ -64,4 +64,32 @@ const getMessagesWithUser = async (req, res) => {
   }
 };
 
-module.exports = { sendMessage, getMessagesWithUser, getMessages };
+const getGroupMembers = async (req, res) => {
+  try {
+    const groupId = req.params.groupId;
+
+    const members = await GroupMember.findAll({
+      where: { groupId },
+      include: [{ model: User, attributes: ["id", "name"] }],
+    });
+
+    return res.json(
+      members.map((m) => ({
+        id: m.User.id,
+        name: m.User.name,
+      }))
+    );
+  } catch (err) {
+    console.error("Error fetching members:", err);
+    return res.status(500).json({
+      message: "Failed to fetch group members",
+      error: err.message,
+    });
+  }
+};
+module.exports = {
+  sendMessage,
+  getMessagesWithUser,
+  getMessages,
+  getGroupMembers,
+};

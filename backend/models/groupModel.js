@@ -38,4 +38,10 @@ Group.hasMany(GroupMessage, { foreignKey: "groupId" });
 GroupMessage.belongsTo(User, { foreignKey: "userId", as: "sender" });
 User.hasMany(GroupMessage, { foreignKey: "userId" });
 
+GroupMember.belongsTo(User, { foreignKey: "userId" });
+User.hasMany(GroupMember, { foreignKey: "userId" });
+
+GroupMember.belongsTo(Group, { foreignKey: "groupId" });
+Group.hasMany(GroupMember, { foreignKey: "groupId" });
+
 module.exports = { Group, GroupMember, GroupMessage };

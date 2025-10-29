@@ -1,14 +1,23 @@
 const { Group, GroupMember, GroupMessage } = require("../models/groupModel");
 const User = require("../models/userModel");
 
-// Create a group
+// ✅ Helper: Check if user is Admin of group
+async function isAdmin(userId, groupId) {
+  const member = await GroupMember.findOne({
+    where: { userId, groupId },
+  });
+  return member && member.role === "admin";
+}
+
+// ✅ Create Group
 const createGroup = async (req, res) => {
   try {
     const { name, description } = req.body;
     if (!name) return res.status(400).json({ message: "Group name required" });
 
     const group = await Group.create({ name, description });
-    // add creator as admin
+
+    // Creator becomes Admin
     await GroupMember.create({
       groupId: group.id,
       userId: req.user.id,
@@ -22,7 +31,7 @@ const createGroup = async (req, res) => {
   }
 };
 
-// List groups that user is member of
+// ✅ List Groups User Belongs To
 const listMyGroups = async (req, res) => {
   try {
     const groups = await Group.findAll({
@@ -36,6 +45,7 @@ const listMyGroups = async (req, res) => {
         },
       ],
     });
+
     res.json(groups);
   } catch (err) {
     console.error(err);
@@ -43,15 +53,18 @@ const listMyGroups = async (req, res) => {
   }
 };
 
-// Join (or invite) - simple join for now
+// ✅ Join Group (without invite for now)
 const joinGroup = async (req, res) => {
   try {
     const { groupId } = req.params;
-    const existing = await GroupMember.findOne({
+    const exists = await GroupMember.findOne({
       where: { groupId, userId: req.user.id },
     });
-    if (existing) return res.status(400).json({ message: "Already a member" });
-    await GroupMember.create({ groupId, userId: req.user.id, role: "member" });
+
+    if (exists) return res.status(400).json({ message: "Already in group" });
+
+    await GroupMember.create({ groupId, userId: req.user.id });
+
     res.json({ message: "Joined group" });
   } catch (err) {
     console.error(err);
@@ -59,13 +72,73 @@ const joinGroup = async (req, res) => {
   }
 };
 
-// Get group messages
+// ✅ Add Member to Group (Admin Only)
+const addMember = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { userId } = req.body;
+
+    if (!(await isAdmin(req.user.id, groupId))) {
+      return res.status(403).json({ message: "Only admin can add members" });
+    }
+
+    const exists = await GroupMember.findOne({ where: { userId, groupId } });
+    if (exists)
+      return res.status(400).json({ message: "User already a member" });
+
+    await GroupMember.create({ userId, groupId, role: "member" });
+
+    res.json({ message: "User added to group" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ✅ Exit Group (Remove Self)
+const exitGroup = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+
+    // if admin leaving? enforce rules later
+    await GroupMember.destroy({
+      where: { groupId, userId: req.user.id },
+    });
+
+    res.json({ message: "Exited group" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ✅ Delete Group — Admin Only
+const deleteGroup = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+
+    if (!(await isAdmin(req.user.id, groupId))) {
+      return res.status(403).json({ message: "Only admin can delete group" });
+    }
+
+    await GroupMessage.destroy({ where: { groupId } });
+    await GroupMember.destroy({ where: { groupId } });
+    await Group.destroy({ where: { id: groupId } });
+
+    res.json({ message: "Group deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ✅ Get Group Messages
 const getGroupMessages = async (req, res) => {
   try {
     const { groupId } = req.params;
-    // ensure user is a member
+
     const member = await GroupMember.findOne({
-      where: { groupId, userId: req.user.id },
+      where: { userId: req.user.id, groupId },
     });
     if (!member) return res.status(403).json({ message: "Not a member" });
 
@@ -74,6 +147,7 @@ const getGroupMessages = async (req, res) => {
       include: [{ model: User, as: "sender", attributes: ["id", "name"] }],
       order: [["createdAt", "ASC"]],
     });
+
     res.json(messages);
   } catch (err) {
     console.error(err);
@@ -81,4 +155,12 @@ const getGroupMessages = async (req, res) => {
   }
 };
 
-module.exports = { createGroup, listMyGroups, joinGroup, getGroupMessages };
+module.exports = {
+  createGroup,
+  listMyGroups,
+  joinGroup,
+  addMember,
+  exitGroup,
+  deleteGroup,
+  getGroupMessages,
+};

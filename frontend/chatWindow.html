@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ChatApp 💬</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ChatApp — Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
 
@@ -13,7 +13,6 @@
       id="sidebar"
       class="w-full md:w-72 bg-gray-800 flex flex-col border-r border-gray-700 transition-transform duration-300 transform md:translate-x-0"
     >
-      <!-- Header -->
       <div
         class="p-4 border-b border-gray-700 flex items-center justify-between"
       >
@@ -26,9 +25,21 @@
         </button>
       </div>
 
-      <!-- Contact List -->
-      <div id="contacts" class="flex-1 overflow-y-auto">
-        <!-- Contacts will be loaded dynamically -->
+      <!-- Contacts -->
+      <div id="contacts" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+
+      <!-- Groups (below contacts) -->
+      <div class="border-t border-gray-700 p-3">
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-lg font-semibold">Groups</h2>
+          <button
+            id="create-group-btn"
+            class="text-green-400 hover:text-green-300 text-sm"
+          >
+            + New
+          </button>
+        </div>
+        <div id="groups" class="overflow-y-auto max-h-56 space-y-2 pr-2"></div>
       </div>
     </aside>
 
@@ -40,14 +51,47 @@
       <header
         class="p-4 bg-gray-800 flex items-center justify-between border-b border-gray-700"
       >
+        <button
+          id="viewMembersBtn"
+          class="bg-blue-600 text-white px-2 py-1 rounded text-sm"
+        >
+          Members
+        </button>
+
         <button id="back-btn" class="md:hidden text-gray-300">←</button>
-        <h2 id="chat-name" class="text-lg font-semibold">Select a Contact</h2>
+        <div class="flex flex-col">
+          <h2 id="chat-name" class="text-lg font-semibold">
+            Select a Contact or Group
+          </h2>
+          <span id="chat-sub" class="text-xs text-gray-400">—</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <button
+            id="add-member-btn"
+            class="text-sm text-gray-300 hover:text-white hidden"
+          >
+            Add
+          </button>
+          <button
+            id="leave-group-btn"
+            class="text-sm text-gray-300 hover:text-white hidden"
+          >
+            Leave
+          </button>
+          <button
+            id="delete-group-btn"
+            class="text-sm text-red-400 hover:text-red-300 hidden"
+          >
+            Delete
+          </button>
+        </div>
       </header>
 
       <div
         id="chat-box"
         class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-900"
       ></div>
+
       <div id="typing-indicator" class="px-4 pb-2 text-sm text-gray-400 hidden">
         Typing...
       </div>
@@ -71,7 +115,72 @@
       </form>
     </main>
 
+    <!-- Create Group Modal -->
+    <div
+      id="create-group-modal"
+      class="hidden fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50"
+    >
+      <div class="bg-gray-800 p-6 rounded-xl w-80">
+        <h3 class="text-lg font-semibold mb-4">Create Group</h3>
+        <input
+          id="group-name"
+          type="text"
+          placeholder="Group name"
+          class="w-full mb-3 p-2 rounded bg-gray-700 text-white"
+        />
+        <textarea
+          id="group-desc"
+          placeholder="Description (optional)"
+          class="w-full mb-4 p-2 rounded bg-gray-700 text-white"
+        ></textarea>
+        <div class="flex justify-end gap-2">
+          <button
+            id="cancel-create-group"
+            class="text-gray-400 hover:text-gray-200"
+          >
+            Cancel
+          </button>
+          <button
+            id="confirm-create-group"
+            class="bg-green-500 px-3 py-1 rounded text-white hover:bg-green-600"
+          >
+            Create
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Member Modal -->
+    <div
+      id="add-member-modal"
+      class="hidden fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50"
+    >
+      <div class="bg-gray-800 p-6 rounded-xl w-96">
+        <h3 class="text-lg font-semibold mb-4">Add Members</h3>
+        <div
+          id="user-list"
+          class="max-h-60 overflow-y-auto mb-4 space-y-2"
+        ></div>
+        <div class="flex justify-end gap-2">
+          <button
+            id="cancel-add-member"
+            class="text-gray-400 hover:text-gray-200"
+          >
+            Cancel
+          </button>
+          <button
+            id="confirm-add-member"
+            class="bg-green-500 px-3 py-1 rounded text-white hover:bg-green-600"
+          >
+            Add
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- libs + script -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- use socket.io client from server (recommended) -->
     <script src="http://localhost:5000/socket.io/socket.io.js"></script>
     <script src="./js/chatWindow.js"></script>
   </body>
