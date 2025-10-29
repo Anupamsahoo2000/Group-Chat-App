@@ -91,7 +91,19 @@ socket.on("userOffline", (userId) => {
 
 // receive 1:1 message
 socket.on("receiveMessage", (msg) => {
-  // show if currently viewing the chat with sender (or if you are sender)
+  console.log("SOCKET MESSAGE RECEIVED:", msg);
+
+  // ✅ Group Message Handling
+  if (msg.groupId) {
+    if (selectedGroupId && msg.groupId === selectedGroupId) {
+      displayMessage(msg); // Show if inside the group chat
+    } else {
+      console.log("New group message in another group:", msg.groupId);
+    }
+    return;
+  }
+
+  // ✅ Private (P2P) Message Handling
   if (
     selectedUserId &&
     (msg.sender.id === selectedUserId ||
@@ -99,9 +111,7 @@ socket.on("receiveMessage", (msg) => {
   ) {
     displayMessage(msg);
   } else {
-    // optional: show notification badge on that contact (not implemented UI-wise)
-    // you can implement a small badge near contact if you want
-    console.log("New message (not active chat):", msg);
+    console.log("New private message not in active chat", msg);
   }
 });
 
@@ -117,6 +127,24 @@ socket.on("receiveGroupMessage", (msg) => {
       badge.textContent = (parseInt(badge.textContent || "0") + 1).toString();
       badge.classList.remove("hidden");
     }
+  }
+});
+// receive media message (1:1 or group)
+socket.on("receiveMediaMessage", (msg) => {
+  if (msg.groupId) {
+    if (selectedGroupId && msg.groupId === selectedGroupId) displayMessage(msg);
+    else {
+      /* show unread badge */
+    }
+  } else if (
+    msg.recipientId &&
+    selectedUserId &&
+    msg.sender.id === selectedUserId
+  ) {
+    displayMessage(msg);
+  } else {
+    // if this is the sender, you might have already appended optimistically
+    if (msg.sender.id === loggedInUserId) displayMessage(msg);
   }
 });
 
@@ -350,34 +378,67 @@ function displayMessage(msg) {
   const div = document.createElement("div");
   div.className = `flex ${isMine ? "justify-end" : "justify-start"} mb-2`;
 
-  // ✅ Wrapper for name + message for group chat
-  let innerHTML = "";
+  // ✅ Wrapper for bubble content (text or media)
+  let bubbleContent = "";
 
-  // ✅ Show sender name only in group chat + not for own messages
+  // ✅ Media message logic
+  if (msg.messageType === "media" && msg.mediaUrl) {
+    if ((msg.mediaType || "").startsWith("image/")) {
+      bubbleContent = `
+        <img src="${msg.mediaUrl}"
+          class="rounded-xl max-w-[200px] max-h-[200px] object-cover" />
+      `;
+    } else if ((msg.mediaType || "").startsWith("video/")) {
+      bubbleContent = `
+        <video controls
+          class="rounded-xl max-w-[200px] max-h-[200px] object-cover">
+          <source src="${msg.mediaUrl}" type="${msg.mediaType}">
+          Your browser does not support video playback.
+        </video>
+      `;
+    } else {
+      bubbleContent = `
+        <a href="${msg.mediaUrl}" target="_blank"
+          class="underline text-blue-300 break-words">
+          📎 Download File
+        </a>
+      `;
+    }
+  } else {
+    // ✅ Text message fallback
+    bubbleContent = msg.content.replace(/\n/g, "<br>");
+  }
+
+  // ✅ Sender name for group chat (not for your own msg)
+  let nameLabel = "";
   if (isGroupChat && !isMine) {
-    innerHTML += `
-      <div class="text-xs font-semibold text-blue-300 mb-1 ml-1 ">
+    nameLabel = `
+      <div class="text-xs font-semibold text-blue-300 mb-1 ml-1">
         ${msg.sender.name}
       </div>
     `;
   }
 
-  // ✅ Your original bubble style preserved ✅
-  innerHTML += `
-    <div class="${
-      isMine ? "bg-green-500 text-white" : "bg-gray-700 text-white"
-    } px-3 py-1 rounded-xl max-w-[70%] break-words whitespace-pre-line inline-block text-left leading-relaxed">
-      ${msg.content.replace(/\n/g, "<br>")}
-    </div>
-    <div class="text-xs text-gray-400 ml-2 self-end">
-      ${new Date(msg.createdAt).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}
+  div.innerHTML = `
+    <div class="flex flex-col ${isMine ? "items-end" : "items-start"} 
+      ${isGroupChat ? "max-w-[75%]" : "max-w-[70%]"} break-words">
+      
+      ${nameLabel}
+
+      <div class="${
+        isMine ? "bg-green-500 text-white" : "bg-gray-700 text-white"
+      } px-3 py-1 rounded-xl whitespace-pre-line text-left leading-relaxed">
+        ${bubbleContent}
+      </div>
+
+      <div class="text-xs text-gray-400 mt-[2px]">
+        ${new Date(msg.createdAt).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
+      </div>
     </div>
   `;
-
-  div.innerHTML = innerHTML;
 
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
@@ -597,6 +658,45 @@ function highlightSelectedGroup(groupId) {
     g.classList.toggle("hover:bg-gray-600", !isSelected);
   });
 }
+
+// media upload handling can be added here similarly
+
+const fileInput = document.getElementById("file-input");
+const attachBtn = document.getElementById("attach-btn");
+attachBtn.addEventListener("click", () => fileInput.click());
+
+fileInput.addEventListener("change", async (ev) => {
+  const file = ev.target.files[0];
+  if (!file) return;
+  // optional: restrict types/sizes here
+  try {
+    const form = new FormData();
+    form.append("file", file);
+    if (selectedGroupId) form.append("groupId", selectedGroupId);
+    else if (selectedUserId) form.append("recipientId", selectedUserId);
+    // show upload progress with axios
+    const res = await axios.post(`${BASE_URL}/media/upload`, form, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (p) => {
+        const pct = Math.round((p.loaded / p.total) * 100);
+        console.log("Upload progress:", pct);
+        // you can show progress UI
+      },
+    });
+    console.log("Upload success:", res.data);
+    // server will emit receiveMediaMessage — you may get that via socket and display
+    // but you can optimistically display the message too using res.data.data
+    const media = res.data.payload;
+  } catch (err) {
+    console.error("Upload failed", err);
+    alert(err.response?.data?.message || "Upload failed");
+  } finally {
+    fileInput.value = ""; // reset
+  }
+});
 
 // Auto-load users+groups on page load
 loadUsers();

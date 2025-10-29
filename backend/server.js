@@ -8,7 +8,8 @@ const db = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const groupRoutes = require("./routes/groupRoutes");
-const socket = require("./socket/socket");
+const mediaRoutes = require("./routes/mediaRoutes");
+const { socket } = require("./socket/socket");
 
 const app = express();
 app.use(cors());
@@ -18,6 +19,7 @@ app.use(express.static(path.join(__dirname, "../frontend")));
 app.use("/user", userRoutes);
 app.use("/chat", chatRoutes);
 app.use("/group", groupRoutes);
+app.use("/media", mediaRoutes);
 
 const server = http.createServer(app);
 socket(server); // ✅ initialize socket.io
