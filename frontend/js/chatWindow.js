@@ -30,6 +30,8 @@ const leaveGroupBtn = document.getElementById("leave-group-btn");
 const deleteGroupBtn = document.getElementById("delete-group-btn");
 
 const typingIndicator = document.getElementById("typing-indicator");
+const aiSuggestionsEl = document.getElementById("ai-suggestions");
+const aiSmartRepliesEl = document.getElementById("ai-smart-replies");
 
 const BASE_URL = "http://localhost:5000";
 
@@ -37,6 +39,7 @@ let selectedUserId = null; // for 1:1
 let selectedGroupId = null; // for groups
 let loggedInUserId = null;
 let joinedGroupIds = JSON.parse(localStorage.getItem("joinedGroupIds") || "[]");
+let suggestionDebounce;
 
 // check token
 const token = localStorage.getItem("token");
@@ -96,7 +99,11 @@ socket.on("receiveMessage", (msg) => {
   // ✅ Group Message Handling
   if (msg.groupId) {
     if (selectedGroupId && msg.groupId === selectedGroupId) {
-      displayMessage(msg); // Show if inside the group chat
+      displayMessage(msg);
+      if (msg.sender.id !== loggedInUserId) {
+        getSmartReplySuggestions(msg.content);
+      }
+      // Show if inside the group chat
     } else {
       console.log("New group message in another group:", msg.groupId);
     }
@@ -120,6 +127,9 @@ socket.on("receiveGroupMessage", (msg) => {
   // msg should include groupId and sender
   if (selectedGroupId && msg.groupId === selectedGroupId) {
     displayMessage(msg);
+    if (msg.sender.id !== loggedInUserId) {
+      getSmartReplySuggestions(msg.content);
+    }
   } else {
     // increment unread badge for group
     const badge = document.getElementById(`badge-group-${msg.groupId}`);
@@ -197,7 +207,63 @@ messageInput.addEventListener("input", () => {
   if (selectedGroupId) socket.emit("typing", { groupId: selectedGroupId });
   else if (selectedUserId)
     socket.emit("typing", { recipientId: selectedUserId });
+  clearTimeout(suggestionDebounce);
+  suggestionDebounce = setTimeout(getPredictiveSuggestions, 500);
 });
+
+// ---------------- AI Integration ----------------
+async function getPredictiveSuggestions() {
+  const text = messageInput.value.trim();
+  if (!text) {
+    aiSuggestionsEl.innerHTML = "";
+    return;
+  }
+
+  try {
+    const res = await axios.post(`${BASE_URL}/ai/predictive`, { text });
+    const suggestions = res.data.suggestions || [];
+
+    aiSuggestionsEl.innerHTML = "";
+    suggestions.slice(0, 3).forEach((s) => {
+      const chip = document.createElement("button");
+      chip.className =
+        "bg-gray-700 text-white px-3 py-1 rounded-full hover:bg-gray-600 text-sm";
+      chip.textContent = s;
+      chip.onclick = () => {
+        messageInput.value = text + " " + s;
+        aiSuggestionsEl.innerHTML = "";
+      };
+      aiSuggestionsEl.appendChild(chip);
+    });
+  } catch (err) {
+    console.log("AI predictive error:", err);
+  }
+}
+
+async function getSmartReplySuggestions(text) {
+  try {
+    const res = await axios.post(`${BASE_URL}/ai/smart-replies`, {
+      message: text,
+    });
+    const replies = res.data.replies || [];
+
+    aiSmartRepliesEl.innerHTML = "";
+    replies.slice(0, 3).forEach((r) => {
+      const btn = document.createElement("button");
+      btn.className =
+        "bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded-xl text-white text-sm transition";
+      btn.textContent = r;
+      btn.onclick = () => {
+        messageInput.value = r;
+        aiSmartRepliesEl.innerHTML = "";
+        chatForm.requestSubmit(); // auto send reply ✅ clean UX
+      };
+      aiSmartRepliesEl.appendChild(btn);
+    });
+  } catch (err) {
+    console.log("AI smart reply error:", err);
+  }
+}
 
 // Load users
 async function loadUsers() {
@@ -368,6 +434,8 @@ chatForm.addEventListener("submit", (e) => {
   }
 
   messageInput.value = "";
+  aiSuggestionsEl.innerHTML = "";
+  aiSmartRepliesEl.innerHTML = "";
 });
 
 // safe displayMessage: supports p2p and group messages (msg.sender should exist)

@@ -9,6 +9,7 @@ const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const groupRoutes = require("./routes/groupRoutes");
 const mediaRoutes = require("./routes/mediaRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 const { socket } = require("./socket/socket");
 
 const app = express();
@@ -20,6 +21,7 @@ app.use("/user", userRoutes);
 app.use("/chat", chatRoutes);
 app.use("/group", groupRoutes);
 app.use("/media", mediaRoutes);
+app.use("/ai", aiRoutes);
 
 require("./cron/archiveMessages"); // start the archiving cron job
 
